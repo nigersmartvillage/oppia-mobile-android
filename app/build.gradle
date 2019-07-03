@@ -21,7 +21,7 @@ android {
         versionCode 68
         versionName "6.8.0"
 
-        applicationId "org.nigersmartvillage.mobile.learning"
+        applicationId "ne.villagesintelligents.oppia"
         minSdkVersion 14
         targetSdkVersion 28
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
