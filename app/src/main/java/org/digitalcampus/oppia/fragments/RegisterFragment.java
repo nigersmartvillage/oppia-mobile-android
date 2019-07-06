@@ -45,8 +45,10 @@ import org.digitalcampus.oppia.utils.ui.ValidableTextInputLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 public class RegisterFragment extends AppFragment implements SubmitListener, RegisterTask.RegisterListener {
 
@@ -157,6 +159,7 @@ public class RegisterFragment extends AppFragment implements SubmitListener, Reg
 		String jobTitle = jobTitleField.getCleanedValue();
 		String organisation = organisationField.getCleanedValue();
 
+
 		boolean valid = true;
 		for (ValidableTextInputLayout field : fields){
 			valid = field.validate() && valid;
@@ -178,8 +181,10 @@ public class RegisterFragment extends AppFragment implements SubmitListener, Reg
             return;
 		}
 
-		// check phone no
-		if (phoneNo.length() < 8) {
+		// check phone no and check if its a required field
+		//if length is less that 8 and required = true
+
+		if (phoneNo.length() < 8 && phoneNoField.getRequiredStatus()){
             phoneNoField.setErrorEnabled(true);
             phoneNoField.setError(getString(R.string.error_register_no_phoneno ));
 			phoneNoField.requestFocus();

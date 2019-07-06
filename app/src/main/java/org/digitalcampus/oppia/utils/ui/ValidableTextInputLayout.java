@@ -76,6 +76,10 @@ public class ValidableTextInputLayout extends TextInputLayout {
         return getEditText().getText().toString().trim();
     }
 
+    public boolean getRequiredStatus(){
+        return required;
+    }
+
 
 
 }

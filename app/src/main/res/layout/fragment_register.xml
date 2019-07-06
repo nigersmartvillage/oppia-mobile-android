@@ -94,7 +94,6 @@
                     android:id="@+id/register_form_email_field"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:required="true"
                     app:cantContainSpaces="true">
 
                     <EditText
@@ -142,7 +141,7 @@
                     android:id="@+id/register_form_phoneno_field"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:required="true">
+                    >
 
                     <EditText
 
