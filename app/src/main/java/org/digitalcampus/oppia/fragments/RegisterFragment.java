@@ -22,15 +22,16 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import androidx.appcompat.app.AlertDialog;
+
 import org.digitalcampus.mobile.learning.BuildConfig;
 import org.digitalcampus.mobile.learning.R;
-import org.digitalcampus.oppia.activity.OppiaMobileActivity;
+import org.digitalcampus.oppia.activity.MainActivity;
 import org.digitalcampus.oppia.activity.WelcomeActivity;
 import org.digitalcampus.oppia.application.MobileLearning;
 import org.digitalcampus.oppia.application.SessionManager;
@@ -45,14 +46,10 @@ import org.digitalcampus.oppia.utils.ui.ValidableTextInputLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 public class RegisterFragment extends AppFragment implements SubmitListener, RegisterTask.RegisterListener {
-
-	public static final String TAG = RegisterFragment.class.getSimpleName();
 
 
 	private ValidableTextInputLayout usernameField;
@@ -98,7 +95,7 @@ public class RegisterFragment extends AppFragment implements SubmitListener, Reg
 
 		return vv;
 	}
-	
+
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
@@ -130,7 +127,7 @@ public class RegisterFragment extends AppFragment implements SubmitListener, Reg
 			gamificationEngine.processEventRegister();
             //Save the search tracker
             new Tracker(super.getActivity()).saveRegisterTracker();
-	    	startActivity(new Intent(getActivity(), OppiaMobileActivity.class));
+	    	startActivity(new Intent(getActivity(), MainActivity.class));
 	    	super.getActivity().finish();
 		} else {
 			Context ctx = super.getActivity();
@@ -159,7 +156,6 @@ public class RegisterFragment extends AppFragment implements SubmitListener, Reg
 		String jobTitle = jobTitleField.getCleanedValue();
 		String organisation = organisationField.getCleanedValue();
 
-
 		boolean valid = true;
 		for (ValidableTextInputLayout field : fields){
 			valid = field.validate() && valid;
@@ -181,10 +177,8 @@ public class RegisterFragment extends AppFragment implements SubmitListener, Reg
             return;
 		}
 
-		// check phone no and check if its a required field
-		//if length is less that 8 and required = true
-
-		if (phoneNo.length() < 8 && phoneNoField.getRequiredStatus()){
+		// check phone no
+		if (phoneNo.length() < 8) {
             phoneNoField.setErrorEnabled(true);
             phoneNoField.setError(getString(R.string.error_register_no_phoneno ));
 			phoneNoField.requestFocus();
@@ -217,7 +211,7 @@ public class RegisterFragment extends AppFragment implements SubmitListener, Reg
 
 		//Save the search tracker
 		new Tracker(super.getActivity()).saveRegisterTracker();
-		startActivity(new Intent(getActivity(), OppiaMobileActivity.class));
+		startActivity(new Intent(getActivity(), MainActivity.class));
 		super.getActivity().finish();
 	}
 

@@ -2,9 +2,10 @@ package UI;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 
 import org.digitalcampus.mobile.learning.R;
 import org.digitalcampus.oppia.activity.DownloadActivity;
@@ -14,6 +15,7 @@ import org.digitalcampus.oppia.di.AppComponent;
 import org.digitalcampus.oppia.di.AppModule;
 import org.digitalcampus.oppia.model.CourseInstallRepository;
 import org.digitalcampus.oppia.model.Lang;
+import org.digitalcampus.oppia.model.MultiLangInfoModel;
 import org.digitalcampus.oppia.service.courseinstall.CourseInstallerServiceDelegate;
 import org.digitalcampus.oppia.service.courseinstall.CourseIntallerService;
 import org.digitalcampus.oppia.task.Payload;
@@ -27,25 +29,21 @@ import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 
-import TestRules.DisableAnimationsRule;
 import it.cosenonjaviste.daggermock.DaggerMockRule;
 
 import static Matchers.EspressoTestsMatchers.withDrawable;
-import static android.support.test.espresso.Espresso.onData;
-import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.assertion.ViewAssertions.doesNotExist;
-import static android.support.test.espresso.assertion.ViewAssertions.matches;
-import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
-import static android.support.test.espresso.matcher.ViewMatchers.isEnabled;
-import static android.support.test.espresso.matcher.ViewMatchers.withId;
-import static android.support.test.espresso.matcher.ViewMatchers.withText;
-import static org.hamcrest.Matchers.anything;
+import static Utils.RecyclerViewMatcher.withRecyclerView;
+import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
+import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.core.IsNot.not;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
 
 @RunWith(AndroidJUnit4.class)
 public class DownloadActivityUITest {
@@ -66,7 +64,7 @@ public class DownloadActivityUITest {
                     });
 
     @Rule
-    public ActivityTestRule<DownloadActivity> tagSelectActivityTestRule =
+    public ActivityTestRule<DownloadActivity> downloadActivityTestRule =
             new ActivityTestRule<>(DownloadActivity.class, false, false);
 
     @Mock CourseInstallRepository courseInstallRepository;
@@ -125,13 +123,12 @@ public class DownloadActivityUITest {
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.course_draft))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.course_draft))
                 .check(matches(withText(R.string.course_draft)));
+
     }
 
     @Test
@@ -141,12 +138,10 @@ public class DownloadActivityUITest {
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.course_draft))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.course_draft))
                 .check(matches(not(isDisplayed())));
     }
 
@@ -161,13 +156,12 @@ public class DownloadActivityUITest {
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.course_title))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.course_title))
                 .check(matches(withText(title)));
+
     }
 
     @Test
@@ -176,13 +170,12 @@ public class DownloadActivityUITest {
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.course_title))
-                .check(matches(withText(R.string.no_title_set)));
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.course_title))
+                .check(matches(withText(MultiLangInfoModel.DEFAULT_NOTITLE)));
+
     }
 
     @Test
@@ -195,45 +188,41 @@ public class DownloadActivityUITest {
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.course_description))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.course_description))
                 .check(matches(withText(description)));
     }
 
-    /*@Test
+    @Test
     public void showDefaultDescriptionIfNotExists() throws Exception{
         CourseIntallViewAdapter c = getBaseCourse();
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.course_description))
-                .check(matches(withText(R.string.no_description_set)));
-    }*/
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.course_description))
+                .check(matches(not(isDisplayed())));
+    }
 
     @Test
     public void showCourseAuthorIfExists() throws Exception{
         CourseIntallViewAdapter c = getBaseCourse();
         String authorName = "Mock Author";
         c.setAuthorName(authorName);
+        c.setOrganisationName(authorName);
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.course_author))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.course_author))
                 .check(matches(withText(authorName)));
+
     }
 
     @Test
@@ -241,13 +230,12 @@ public class DownloadActivityUITest {
 
         givenThereAreSomeCourses(2, getBaseCourse());
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.course_author))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.course_author))
                 .check(matches(not(isDisplayed())));
+
     }
 
     @Test
@@ -264,12 +252,10 @@ public class DownloadActivityUITest {
             }
         }).when(courseInstallerServiceDelegate).installCourse((Context) any(), (Intent) any(), (CourseIntallViewAdapter) any());
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_course_btn))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_course_btn))
                 .perform(click())
                 .check(matches(withDrawable(R.drawable.ic_action_cancel)));
 
@@ -292,12 +278,10 @@ public class DownloadActivityUITest {
             }
         }).when(courseInstallerServiceDelegate).installCourse((Context) any(), (Intent) any(), (CourseIntallViewAdapter) any());
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_course_btn))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_course_btn))
                 .perform(click())
                 .check(matches(withDrawable(R.drawable.ic_action_cancel)));
 
@@ -317,24 +301,14 @@ public class DownloadActivityUITest {
             }
         }).when(courseInstallerServiceDelegate).installCourse((Context) any(), (Intent) any(), (CourseIntallViewAdapter) any());
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.course_progress_bar))
-                .check(doesNotExist());
-
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_course_btn))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_course_btn))
                 .perform(click());
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_progress))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_progress))
                 .check(matches(isDisplayed()));
 
     }
@@ -354,18 +328,14 @@ public class DownloadActivityUITest {
             }
         }).when(courseInstallerServiceDelegate).installCourse((Context) any(), (Intent) any(), (CourseIntallViewAdapter) any());
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_course_btn))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_course_btn))
                 .perform(click());
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_progress))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_progress))
                 .check(matches(isDisplayed()));
 
     }
@@ -379,12 +349,10 @@ public class DownloadActivityUITest {
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_progress))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_progress))
                 .check(matches(not(isDisplayed())));
 
     }
@@ -405,19 +373,14 @@ public class DownloadActivityUITest {
             }
         }).when(courseInstallerServiceDelegate).installCourse((Context) any(), (Intent) any(), (CourseIntallViewAdapter) any());
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_course_btn))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_course_btn))
                 .perform(click());
 
-
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_progress))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_progress))
                 .check(matches(not(isDisplayed())));
 
     }
@@ -432,12 +395,10 @@ public class DownloadActivityUITest {
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_course_btn))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_course_btn))
                 .check(matches(withDrawable(R.drawable.ic_action_download)));
 
     }
@@ -452,13 +413,12 @@ public class DownloadActivityUITest {
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_course_btn))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_course_btn))
                 .check(matches(withDrawable(R.drawable.ic_action_refresh)));
+
     }
 
     @Test
@@ -471,13 +431,12 @@ public class DownloadActivityUITest {
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_course_btn))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_course_btn))
                 .check(matches(isEnabled()));
+
     }
 
     @Test
@@ -491,13 +450,12 @@ public class DownloadActivityUITest {
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_course_btn))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_course_btn))
                 .check(matches(withDrawable(R.drawable.ic_action_refresh)));
+
     }
 
     @Test
@@ -511,13 +469,12 @@ public class DownloadActivityUITest {
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_course_btn))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_course_btn))
                 .check(matches(isEnabled()));
+
     }
 
     @Test
@@ -536,14 +493,13 @@ public class DownloadActivityUITest {
             }
         }).when(courseInstallerServiceDelegate).installCourse((Context) any(), (Intent) any(), (CourseIntallViewAdapter) any());
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_course_btn))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_course_btn))
                 .perform(click())
                 .check(matches(withDrawable(R.drawable.ic_action_accept)));
+
 
     }
 
@@ -575,12 +531,10 @@ public class DownloadActivityUITest {
         }).when(courseInstallerServiceDelegate).installCourse((Context) any(), (Intent) any(), (CourseIntallViewAdapter) any());
 
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_course_btn))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_course_btn))
                 .perform(click())
                 .check(matches(withDrawable(R.drawable.ic_action_accept)));
 
@@ -597,12 +551,10 @@ public class DownloadActivityUITest {
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_course_btn))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_course_btn))
                 .check(matches(not(isEnabled())));
 
     }
@@ -616,13 +568,14 @@ public class DownloadActivityUITest {
 
         givenThereAreSomeCourses(2, c);
 
-        tagSelectActivityTestRule.launchActivity(null);
+        downloadActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.download_course_btn))
+//        onView(withRecyclerView(R.id.recycler_tags).atPosition(0)).perform(click());
+
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.download_course_btn))
                 .check(matches(isEnabled()));
+
     }
     
 

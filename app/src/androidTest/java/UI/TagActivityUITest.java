@@ -1,10 +1,10 @@
 package UI;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.espresso.assertion.ViewAssertions;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 
 import org.digitalcampus.mobile.learning.R;
 import org.digitalcampus.oppia.activity.TagSelectActivity;
@@ -24,17 +24,12 @@ import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 
-import TestRules.DisableAnimationsRule;
 import it.cosenonjaviste.daggermock.DaggerMockRule;
 
-import static android.support.test.espresso.Espresso.onData;
-import static android.support.test.espresso.Espresso.onView;
-import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.assertion.ViewAssertions.matches;
-import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
-import static android.support.test.espresso.matcher.ViewMatchers.withId;
-import static android.support.test.espresso.matcher.ViewMatchers.withText;
-import static org.hamcrest.Matchers.anything;
+import static Utils.RecyclerViewMatcher.withRecyclerView;
+import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.core.StringStartsWith.startsWith;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -94,11 +89,10 @@ public class TagActivityUITest {
 
         tagSelectActivityTestRule.launchActivity(null);
 
-        onData(anything())
-                .inAdapterView(withId(R.id.tag_list))
-                .atPosition(0)
-                .onChildView(withId(R.id.tag_name))
+        onView(withRecyclerView(R.id.recycler_tags)
+                .atPositionOnView(0, R.id.tag_name))
                 .check(matches(withText(startsWith("Mocked Course Name"))));
+
     }
 
 }

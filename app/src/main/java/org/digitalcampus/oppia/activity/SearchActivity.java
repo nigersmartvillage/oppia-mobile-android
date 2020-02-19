@@ -17,42 +17,37 @@
 
 package org.digitalcampus.oppia.activity;
 
-import java.util.ArrayList;
-import java.util.List;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 import org.digitalcampus.mobile.learning.R;
-import org.digitalcampus.oppia.adapter.SearchResultsListAdapter;
+import org.digitalcampus.oppia.adapter.SearchResultsAdapter;
 import org.digitalcampus.oppia.application.DbHelper;
 import org.digitalcampus.oppia.application.Tracker;
 import org.digitalcampus.oppia.listener.DBListener;
 import org.digitalcampus.oppia.model.Course;
 import org.digitalcampus.oppia.model.SearchResult;
-import org.digitalcampus.oppia.utils.ui.DrawerMenuManager;
 import org.digitalcampus.oppia.utils.ui.SimpleAnimator;
 
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.util.Log;
-import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.View;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SearchActivity extends AppActivity {
-
-	public static final String TAG = SearchActivity.class.getSimpleName();
 
     private SharedPreferences prefs;
     private long userId = 0;
@@ -60,38 +55,37 @@ public class SearchActivity extends AppActivity {
 	private EditText searchText;
     private TextView summary;
     private ProgressBar loadingSpinner;
-    private ListView resultsList;
+    private RecyclerView recyclerResults;
     private ImageView searchButton;
 
 	private String currentSearch;
-    private SearchResultsListAdapter srla;
     protected ArrayList<SearchResult> results = new ArrayList<>();
+    private SearchResultsAdapter adapterResults;
 
-    private DrawerMenuManager drawer;
-	
-	@Override
+
+    @Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_search);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        srla = new SearchResultsListAdapter(this, results);
-        resultsList = findViewById(R.id.search_results_list);
-        if (resultsList != null) {
-            resultsList.setAdapter(srla);
-            resultsList.setOnItemClickListener(new OnItemClickListener() {
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Course course = (Course) view.getTag(R.id.TAG_COURSE);
-                    String digest = (String) view.getTag(R.id.TAG_ACTIVITY_DIGEST);
+        adapterResults = new SearchResultsAdapter(this, results);
+        recyclerResults = findViewById(R.id.recycler_results_search);
+        recyclerResults.setAdapter(adapterResults);
+        adapterResults.setOnItemClickListener(new SearchResultsAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                Course course = (Course) view.getTag(R.id.TAG_COURSE);
+                String digest = (String) view.getTag(R.id.TAG_ACTIVITY_DIGEST);
 
-                    Intent i = new Intent(SearchActivity.this, CourseIndexActivity.class);
-                    Bundle tb = new Bundle();
-                    tb.putSerializable(Course.TAG, course);
-                    tb.putSerializable(CourseIndexActivity.JUMPTO_TAG, digest);
-                    i.putExtras(tb);
-                    SearchActivity.this.startActivity(i);
-                }
-            });
-        }
+                Intent i = new Intent(SearchActivity.this, CourseIndexActivity.class);
+                Bundle tb = new Bundle();
+                tb.putSerializable(Course.TAG, course);
+                tb.putSerializable(CourseIndexActivity.JUMPTO_TAG, digest);
+                i.putExtras(tb);
+                SearchActivity.this.startActivity(i);
+            }
+        });
+
 
 
 	}
@@ -99,9 +93,7 @@ public class SearchActivity extends AppActivity {
 	@Override
 	public void onStart(){
 		super.onStart();
-
-        drawer = new DrawerMenuManager(this, false);
-        drawer.initializeDrawer();
+        initialize();
 
 		DbHelper db = DbHelper.getInstance(this);
 		userId = db.getUserId(prefs.getString("preUsername", ""));
@@ -162,7 +154,7 @@ public class SearchActivity extends AppActivity {
         if ((searchResults != null) && !searchResults.isEmpty()){
             results.clear();
             results.addAll(searchResults);
-            srla.notifyDataSetChanged();
+            adapterResults.notifyDataSetChanged();
         }
     }
 
@@ -173,7 +165,13 @@ public class SearchActivity extends AppActivity {
     }
 
     private void performSearch(){
-        String newSearch = searchText.getText().toString();
+        String newSearch = searchText.getText().toString().trim();
+
+        if (TextUtils.isEmpty(newSearch)) {
+            searchText.setText("");
+            return;
+        }
+
         if (!newSearch.equals(currentSearch)){
             currentSearch = newSearch;
 
@@ -181,7 +179,7 @@ public class SearchActivity extends AppActivity {
             loadingSpinner.setVisibility(View.VISIBLE);
             summary.setText(getString(R.string.search_message_searching));
             summary.setVisibility(View.VISIBLE);
-            SimpleAnimator.fadeFromTop(resultsList, SimpleAnimator.FADE_OUT);
+            SimpleAnimator.fadeFromTop(recyclerResults, SimpleAnimator.FADE_OUT);
             SimpleAnimator.fadeFromTop(summary, SimpleAnimator.FADE_IN);
 
             new SearchTask().execute("");
@@ -207,9 +205,9 @@ public class SearchActivity extends AppActivity {
         protected void onPostExecute(List<SearchResult> searchResults) {
             results.clear();
             results.addAll(searchResults);
-            srla.notifyDataSetChanged();
-            resultsList.setSelectionAfterHeaderView();
-            SimpleAnimator.fadeFromTop(resultsList, SimpleAnimator.FADE_IN);
+            adapterResults.notifyDataSetChanged();
+//            resultsList.setSelectionAfterHeaderView();
+            SimpleAnimator.fadeFromTop(recyclerResults, SimpleAnimator.FADE_IN);
             loadingSpinner.setVisibility(View.GONE);
             searchButton.setEnabled(true);
 
@@ -229,23 +227,4 @@ public class SearchActivity extends AppActivity {
         }
     }
 
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        drawer.onPrepareOptionsMenu(menu, R.id.menu_search);
-        return super.onPrepareOptionsMenu(menu);
-    }
-
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        // Sync the toggle state after onRestoreInstanceState has occurred.
-        drawer.onPostCreate(savedInstanceState);
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        // Pass any configuration change to the drawer toggls
-        drawer.onConfigurationChanged(newConfig);
-    }
 }

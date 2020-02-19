@@ -20,12 +20,15 @@ package org.digitalcampus.oppia.widgets;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
 import org.digitalcampus.mobile.learning.R;
+import org.digitalcampus.oppia.activity.PrefsActivity;
 import org.digitalcampus.oppia.model.Activity;
 import org.digitalcampus.oppia.model.Course;
 import org.digitalcampus.oppia.utils.mediaplayer.VideoPlayerActivity;
@@ -33,10 +36,11 @@ import org.digitalcampus.oppia.utils.storage.FileUtils;
 import org.digitalcampus.oppia.utils.storage.Storage;
 
 import java.util.HashMap;
+import java.util.Locale;
 
 public abstract class WidgetFactory extends Fragment {
 	
-	public final static String TAG = WidgetFactory.class.getSimpleName();
+	public static final String TAG = WidgetFactory.class.getSimpleName();
 
 	protected static final String QUIZ_EXCEPTION_MESSAGE = "Invalid Quiz Error: ";
 
@@ -44,6 +48,7 @@ public abstract class WidgetFactory extends Fragment {
     protected static final String PROPERTY_FEEDBACK = "feedback";
     protected static final String PROPERTY_ACTIVITY_STARTTIME = "Activity_StartTime";
     protected static final String PROPERTY_ON_RESULTS_PAGE = "OnResultsPage";
+    protected static final String PROPERTY_ATTEMPT_SAVED = "attemptSaved";
     protected static final String PROPERTY_COURSE = "Course";
     protected static final String PROPERTY_ACTIVITY = "Activity";
 
@@ -52,10 +57,12 @@ public abstract class WidgetFactory extends Fragment {
 	protected SharedPreferences prefs;
 	protected boolean isBaseline = false;
     protected boolean readAloud = false;
+    protected String prefLang;
 
 	protected long startTime = 0;
     protected long spentTime = 0;
 	protected boolean currentTimeAccounted = false;
+
 	
 	public abstract boolean getActivityCompleted();
 	public abstract void saveTracker();
@@ -67,8 +74,10 @@ public abstract class WidgetFactory extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         Log.i(TAG, "onCreate WidgetFactory: " + this.getClass().getSimpleName());
+
+        prefs = PreferenceManager.getDefaultSharedPreferences(super.getActivity());
+        prefLang = prefs.getString(PrefsActivity.PREF_LANGUAGE, Locale.getDefault().getLanguage());
     }
 
     public void setReadAloud(boolean readAloud){

@@ -2,10 +2,11 @@ package org.digitalcampus.oppia.utils.ui;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.support.design.widget.TextInputLayout;
 import android.text.Html;
 import android.text.Spanned;
 import android.util.AttributeSet;
+
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.digitalcampus.mobile.learning.R;
 
@@ -76,8 +77,9 @@ public class ValidableTextInputLayout extends TextInputLayout {
         return getEditText().getText().toString().trim();
     }
 
-    public boolean getRequiredStatus(){
-        return required;
+    public void setText(String text) {
+
+        getEditText().setText(text);
     }
 
 

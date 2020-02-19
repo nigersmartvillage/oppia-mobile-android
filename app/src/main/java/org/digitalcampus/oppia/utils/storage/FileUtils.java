@@ -1,16 +1,16 @@
-/* 
+/*
  * This file is part of OppiaMobile - https://digital-campus.org/
- * 
+ *
  * OppiaMobile is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * OppiaMobile is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with OppiaMobile. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -168,7 +168,7 @@ public class FileUtils {
 
 
 	private static void zipSubFolder(ZipOutputStream out, File folder,
-							  int basePathLength) throws IOException {
+									 int basePathLength) throws IOException {
 
 		final int BUFFER = 2048;
 
@@ -224,49 +224,49 @@ public class FileUtils {
 		}
 	}
 
-    public static boolean cleanDir(File dir){
-        if (dir.isDirectory()) {
-            String[] children = dir.list();
-            for (String dirFiles : children) {
-                File fileToDelete = new File(dir, dirFiles);
-                boolean success = deleteDir(fileToDelete);
-                if (!success) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
+	public static boolean cleanDir(File dir){
+		if (dir.isDirectory()) {
+			String[] children = dir.list();
+			for (String dirFiles : children) {
+				File fileToDelete = new File(dir, dirFiles);
+				boolean success = deleteDir(fileToDelete);
+				if (!success) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 
 	// Deletes all files and subdirectories under dir.
 	// Returns true if all deletions were successful.
 	// If a deletion fails, the method stops attempting to delete and returns
 	// false.
 	public static boolean deleteDir(File dir) {
-        if (cleanDir(dir)){
-            // The directory is now empty so delete it
-            return dir.delete();
-        }
-        else {
-            return false;
-        }
+		if (cleanDir(dir)){
+			// The directory is now empty so delete it
+			return dir.delete();
+		}
+		else {
+			return false;
+		}
 	}
 
-    public static long dirSize(File dir){
-        if (dir.exists() && dir.isDirectory()) {
-            long result = 0;
-            File[] fileList = dir.listFiles();
-            for (File file : fileList) {
-                if (file.isDirectory()) {
-                    result += dirSize(file);
-                } else {
-                    result += file.length();
-                }
-            }
-            return result;
-        }
-        return 0;
-    }
+	public static long dirSize(File dir){
+		if (dir.exists() && dir.isDirectory()) {
+			long result = 0;
+			File[] fileList = dir.listFiles();
+			for (File file : fileList) {
+				if (file.isDirectory()) {
+					result += dirSize(file);
+				} else {
+					result += file.length();
+				}
+			}
+			return result;
+		}
+		return 0;
+	}
 
 	public static void cleanUp(File tempDir, String path) {
 		FileUtils.deleteDir(tempDir);
@@ -278,7 +278,7 @@ public class FileUtils {
 
 	public static String readFile(String file) throws IOException {
 		FileInputStream fstream = new FileInputStream(file);
-        return readFile(fstream);
+		return readFile(fstream);
 	}
 
 	public static String readFile(File file) throws IOException {
@@ -321,15 +321,15 @@ public class FileUtils {
 		if (mimeType == null) {
 			return false;
 		}
-        for (String s: MobileLearning.SUPPORTED_MEDIA_TYPES){
-            if(mimeType.equals(s)){
-                return true;
-            }
-        }
-        return false;
+		for (String s: MobileLearning.SUPPORTED_MEDIA_TYPES){
+			if(mimeType.equals(s)){
+				return true;
+			}
+		}
+		return false;
 	}
 
-    public static void moveFileToDir(File file, File mediaDir, boolean deleteOnError) {
+	public static void moveFileToDir(File file, File mediaDir, boolean deleteOnError) {
 		try {
 			org.apache.commons.io.FileUtils.moveFileToDirectory(file, mediaDir, true);
 		}catch (IOException e) {

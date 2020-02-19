@@ -19,23 +19,21 @@ package org.digitalcampus.oppia.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
-import android.widget.AdapterView;
-import android.widget.GridView;
-import android.widget.LinearLayout.LayoutParams;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.androidplot.pie.PieChart;
+import com.mikhaellopez.circularprogressbar.CircularProgressBar;
 
 import org.digitalcampus.mobile.learning.R;
-import org.digitalcampus.oppia.activity.CourseIndexActivity;
-import org.digitalcampus.oppia.adapter.CourseQuizzesGridAdapter;
+import org.digitalcampus.oppia.activity.PrefsActivity;
+import org.digitalcampus.oppia.activity.CourseQuizAttemptsActivity;
+import org.digitalcampus.oppia.adapter.CourseQuizzesAdapter;
 import org.digitalcampus.oppia.application.DbHelper;
+import org.digitalcampus.oppia.application.MobileLearning;
 import org.digitalcampus.oppia.application.SessionManager;
 import org.digitalcampus.oppia.model.Activity;
 import org.digitalcampus.oppia.model.CompleteCourse;
@@ -43,20 +41,19 @@ import org.digitalcampus.oppia.model.Course;
 import org.digitalcampus.oppia.model.QuizStats;
 import org.digitalcampus.oppia.task.ParseCourseXMLTask;
 import org.digitalcampus.oppia.utils.ui.ProgressBarAnimator;
-import org.digitalcampus.oppia.utils.ui.ScorecardPieChart;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
-public class CourseScorecardFragment extends Fragment implements ParseCourseXMLTask.OnParseXmlListener, AdapterView.OnItemClickListener {
+import androidx.recyclerview.widget.RecyclerView;
 
-	public static final String TAG = CourseScorecardFragment.class.getSimpleName();
+public class CourseScorecardFragment extends AppFragment implements ParseCourseXMLTask.OnParseXmlListener, CourseQuizzesAdapter.OnItemClickListener {
+
 	private Course course = null;
-    private boolean firstTimeOpened = true;
-    private GridView quizzesGrid;
-    private PieChart scorecardPieChart;
+    private RecyclerView quizzesGrid;
     private ArrayList<QuizStats> quizStats = new ArrayList<>();
-    private CourseQuizzesGridAdapter quizzesAdapter;
-    ParseCourseXMLTask xmlTask;
+    private CourseQuizzesAdapter quizzesAdapter;
+    private ParseCourseXMLTask xmlTask;
 
     private TextView highlightPretest;
     private TextView highlightAttempted;
@@ -68,8 +65,9 @@ public class CourseScorecardFragment extends Fragment implements ParseCourseXMLT
     private View quizzesContainer;
 
     private ProgressBar loadingSpinner;
+    private CircularProgressBar cpbScorecard;
 
-	public static CourseScorecardFragment newInstance(Course course) {
+    public static CourseScorecardFragment newInstance(Course course) {
 		CourseScorecardFragment myFragment = new CourseScorecardFragment();
 		Bundle args = new Bundle();
 	    args.putSerializable(Course.TAG, course);
@@ -95,7 +93,7 @@ public class CourseScorecardFragment extends Fragment implements ParseCourseXMLT
         this.course = db.getCourse(this.course.getCourseId(), userId);
 
         quizzesGrid = vv.findViewById(R.id.scorecard_grid_quizzes);
-        scorecardPieChart = vv.findViewById(R.id.scorecard_pie_chart);
+        cpbScorecard = vv.findViewById(R.id.cpb_scorecard);
 
         highlightPretest = vv.findViewById(R.id.tv_ranking);
         highlightAttempted = vv.findViewById(R.id.highlight_attempted);
@@ -115,29 +113,37 @@ public class CourseScorecardFragment extends Fragment implements ParseCourseXMLT
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 
-        ScorecardPieChart spc = new ScorecardPieChart(super.getActivity(), scorecardPieChart, this.course);
-        spc.drawChart(0, 0.55f, false, firstTimeOpened);
-        firstTimeOpened = false;
-        activitiesTotal.setText(""+course.getNoActivities());
-        activitiesCompleted.setText(""+course.getNoActivitiesCompleted());
+        int totalActivities = course.getNoActivities();
+        int completedActivities = course.getNoActivitiesCompleted();
+        cpbScorecard.setProgressMax(totalActivities);
+        cpbScorecard.setProgressWithAnimation(completedActivities, MobileLearning.SCORECARD_ANIM_DURATION);
 
-        quizzesAdapter = new CourseQuizzesGridAdapter(getActivity(), quizStats);
+        activitiesTotal.setText(String.valueOf(course.getNoActivities()));
+        activitiesCompleted.setText(String.valueOf(course.getNoActivitiesCompleted()));
+
+        quizzesAdapter = new CourseQuizzesAdapter(getActivity(), quizStats);
         quizzesGrid.setAdapter(quizzesAdapter);
-        quizzesGrid.setOnItemClickListener(this);
+        quizzesGrid.setNestedScrollingEnabled(false);
+        quizzesAdapter.setOnItemClickListener(this);
 	}
 
     //@Override
-    public void onParseComplete(CompleteCourse parsed) {
+    public void onParseComplete(CompleteCourse parsedCourse) {
 
-        ArrayList<Activity> baseline = parsed.getBaselineActivities();
+        ArrayList<Activity> baseline = parsedCourse.getBaselineActivities();
         
     	DbHelper db = DbHelper.getInstance(super.getActivity());
         long userId = db.getUserId(SessionManager.getUsername(getActivity()));
         ArrayList<Activity> quizActs = db.getCourseQuizzes(course.getCourseId());
         ArrayList<QuizStats> quizzes = new ArrayList<>();
+
+        String prefLang = prefs.getString(PrefsActivity.PREF_LANGUAGE, Locale.getDefault().getLanguage());
+
         for (Activity a: quizActs){
         	// get the max score for the quiz for the user
         	QuizStats qs = db.getQuizAttempt(a.getDigest(), userId);
+        	qs.setQuizTitle(a.getTitle(prefLang));
+        	qs.setSectionTitle(parsedCourse.getSectionByActivityDigest(a.getDigest()).getTitle(prefLang));
         	quizzes.add(qs);
         }
 
@@ -167,8 +173,8 @@ public class CourseScorecardFragment extends Fragment implements ParseCourseXMLT
         }
         
         highlightPretest.setText(pretestScore >= 0 ? (pretestScore + "%") : "-");
-        highlightAttempted.setText("" + quizzesAttempted);
-        highlightPassed.setText("" + quizzesPassed);
+        highlightAttempted.setText(String.valueOf(quizzesAttempted));
+        highlightPassed.setText(String.valueOf(quizzesPassed));
         quizzesAdapter.notifyDataSetChanged();
 
         loadingSpinner.setVisibility(View.GONE);
@@ -201,12 +207,13 @@ public class CourseScorecardFragment extends Fragment implements ParseCourseXMLT
         // no need to do anything
     }
 
-    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-        QuizStats quiz = quizzesAdapter.getItem(i);
+    public void onItemClick(int position) {
+        QuizStats quiz = quizzesAdapter.getItemAtPosition(position);
 
-        Intent returnIntent = new Intent();
-        returnIntent.putExtra(CourseIndexActivity.JUMPTO_TAG, quiz.getDigest());
-        getActivity().setResult(CourseIndexActivity.RESULT_JUMPTO, returnIntent);
-        getActivity().finish();
+        Intent i = new Intent(getActivity(), CourseQuizAttemptsActivity.class);
+        Bundle tb = new Bundle();
+        tb.putSerializable(QuizStats.TAG, quiz);
+        i.putExtras(tb);
+        startActivityForResult(i, 1);
     }
 }

@@ -17,12 +17,19 @@
 
 package org.digitalcampus.oppia.activity;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.concurrent.Callable;
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
+
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.splunk.mint.Mint;
 
 import org.digitalcampus.mobile.learning.R;
-import org.digitalcampus.oppia.adapter.TagListAdapter;
+import org.digitalcampus.oppia.adapter.TagsAdapter;
 import org.digitalcampus.oppia.application.MobileLearning;
 import org.digitalcampus.oppia.listener.APIRequestListener;
 import org.digitalcampus.oppia.model.Tag;
@@ -32,52 +39,52 @@ import org.digitalcampus.oppia.utils.UIUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.splunk.mint.Mint;
-
-import android.app.ProgressDialog;
-import android.content.Intent;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ListView;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
 
 public class TagSelectActivity extends AppActivity implements APIRequestListener {
 
-	public static final String TAG = TagSelectActivity.class.getSimpleName();
-
 	private ProgressDialog pDialog;
 	private JSONObject json;
-	private TagListAdapter tla;
     private ArrayList<Tag> tags;
 
 	@Inject TagRepository tagRepository;
-	
+	private RecyclerView recyclerTags;
+	private TagsAdapter adapterTags;
+
+	@Override
+	public void onStart(){
+		super.onStart();
+		initialize();
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_download);
-
+		TextView tagTitle = findViewById(R.id.category_title);
+		tagTitle.setVisibility(View.GONE);
 		initializeDagger();
 
         tags = new ArrayList<>();
-        tla = new TagListAdapter(this, tags);
+        adapterTags = new TagsAdapter(this, tags);
 
-        ListView listView = findViewById(R.id.tag_list);
-        listView.setAdapter(tla);
-        listView.setOnItemClickListener(new OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Tag selectedTag = tags.get(position);
-                Intent i = new Intent(TagSelectActivity.this, DownloadActivity.class);
-                Bundle tb = new Bundle();
-                tb.putSerializable(Tag.TAG, selectedTag);
-                i.putExtras(tb);
-                startActivity(i);
-            }
-        });
+        recyclerTags = findViewById(R.id.recycler_tags);
+		recyclerTags.setAdapter(adapterTags);
+		adapterTags.setOnItemClickListener(new TagsAdapter.OnItemClickListener() {
+			@Override
+			public void onItemClick(View view, int position) {
+				Tag selectedTag = tags.get(position);
+				Intent i = new Intent(TagSelectActivity.this, DownloadActivity.class);
+				Bundle tb = new Bundle();
+				tb.putSerializable(Tag.TAG, selectedTag);
+				i.putExtras(tb);
+				startActivity(i);
+			}
+		});
 
 	}
 
@@ -94,7 +101,7 @@ public class TagSelectActivity extends AppActivity implements APIRequestListener
 			this.getTagList();
         } else if ((tags != null) && !tags.isEmpty()) {
             //We already have loaded JSON and tags (coming from orientationchange)
-            tla.notifyDataSetChanged();
+            adapterTags.notifyDataSetChanged();
         }
         else{
             //The JSON is downloaded but tag list is not
@@ -154,7 +161,7 @@ public class TagSelectActivity extends AppActivity implements APIRequestListener
 		try {
 			tagRepository.refreshTagList(tags, json);
 
-            tla.notifyDataSetChanged();
+            adapterTags.notifyDataSetChanged();
             findViewById(R.id.empty_state).setVisibility((tags.isEmpty()) ? View.VISIBLE : View.GONE);
 
 		} catch (JSONException e) {

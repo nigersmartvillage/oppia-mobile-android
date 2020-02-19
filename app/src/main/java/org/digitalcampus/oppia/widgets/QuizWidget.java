@@ -26,7 +26,6 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AlertDialog;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -37,10 +36,13 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.splunk.mint.Mint;
 
@@ -91,15 +93,17 @@ public class QuizWidget extends WidgetFactory {
 	private static final int PROGRESS_ANIM_DURATION = 600;
 	private Quiz quiz;
 	private QuestionWidget qw;
-	public Button prevBtn;
-	public Button nextBtn;
-	public ImageView playAudioBtn;
+	private Button prevBtn;
+	private Button nextBtn;
+	private ImageView playAudioBtn;
 	private TextView qText;
 	private String quizContent;
 	private LinearLayout questionImage;
-	private boolean isOnResultsPage = false;
 	private ViewGroup container;
 	private MediaPlayer mp;
+
+	private boolean isOnResultsPage = false;
+	private boolean quizAttemptSaved = false;
 
 	private ProgressBar progressBar;
 	private ProgressBarAnimator barAnim;
@@ -123,14 +127,13 @@ public class QuizWidget extends WidgetFactory {
 	@SuppressWarnings("unchecked")
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		prefs = PreferenceManager.getDefaultSharedPreferences(super.getActivity());
+
 		View vv = inflater.inflate(R.layout.widget_quiz, container, false);
 		this.container = container;
 		course = (Course) getArguments().getSerializable(Course.TAG);
 		activity = ((Activity) getArguments().getSerializable(Activity.TAG));
 		this.setIsBaseline(getArguments().getBoolean(CourseActivity.BASELINE_TAG));
-		quizContent = ((Activity) getArguments().getSerializable(Activity.TAG)).getContents(prefs.getString(
-				PrefsActivity.PREF_LANGUAGE, Locale.getDefault().getLanguage()));
+		quizContent = activity.getContents(prefLang);
 
 		vv.setId(activity.getActId());
 		if ((savedInstanceState != null) && (savedInstanceState.getSerializable(WidgetFactory.WIDGET_CONFIG) != null)){
@@ -176,8 +179,7 @@ public class QuizWidget extends WidgetFactory {
     public void loadQuiz(){
         if (this.quiz == null) {
             this.quiz = new Quiz();
-            this.quiz.load(quizContent,prefs.getString(
-                    PrefsActivity.PREF_LANGUAGE, Locale.getDefault().getLanguage()));
+            this.quiz.load(quizContent, prefLang);
         }
 
         if (this.isOnResultsPage) {
@@ -309,7 +311,7 @@ public class QuizWidget extends WidgetFactory {
 	}
 
 	private String stripAudioFromText(QuizQuestion q) {
-		String questionText = q.getTitle(prefs.getString(PrefsActivity.PREF_LANGUAGE, Locale.getDefault().getLanguage()));
+		String questionText = q.getTitle(prefLang);
 		Pattern p = Pattern.compile("[a-zA-Z0-9\\-_]+\\.mp3");
 		Matcher m = p.matcher(questionText);
 		if (m.find()){
@@ -370,7 +372,7 @@ public class QuizWidget extends WidgetFactory {
 				if (saveAnswer()) {
 					String feedback;
 					try {
-						feedback = QuizWidget.this.quiz.getCurrentQuestion().getFeedback(prefs.getString(PrefsActivity.PREF_LANGUAGE, Locale.getDefault().getLanguage()));
+						feedback = QuizWidget.this.quiz.getCurrentQuestion().getFeedback(prefLang);
 					
 						if (!feedback.equals("") && 
 								quiz.getShowFeedback() == Quiz.SHOW_FEEDBACK_ALWAYS 
@@ -479,7 +481,7 @@ public class QuizWidget extends WidgetFactory {
 		clearMediaPlayer();
 		// log the activity as complete
 		isOnResultsPage = true;
-		quiz.mark(prefs.getString(PrefsActivity.PREF_LANGUAGE, Locale.getDefault().getLanguage()));
+		quiz.mark(prefLang);
 
 		//Check if quiz results layout is already loaded
         View quizResultsLayout = getView()==null ? null : getView().findViewById(R.id.widget_quiz_results);
@@ -504,26 +506,29 @@ public class QuizWidget extends WidgetFactory {
 		
 		// Show the detail of which questions were right/wrong
 		if (quiz.getShowFeedback() == Quiz.SHOW_FEEDBACK_ALWAYS || quiz.getShowFeedback() == Quiz.SHOW_FEEDBACK_ATEND){
-			ListView questionFeedbackLV = getView().findViewById(R.id.quiz_results_feedback);
+			RecyclerView recyclerQuestionFeedbackLV = getView().findViewById(R.id.recycler_quiz_results_feedback);
+			recyclerQuestionFeedbackLV.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
 			ArrayList<QuizFeedback> quizFeedback = new ArrayList<>();
 			List<QuizQuestion> questions = this.quiz.getQuestions();
 			for(QuizQuestion q: questions){
 				if(!(q instanceof Description)){
 					QuizFeedback qf = new QuizFeedback();
 					qf.setScore(q.getScoreAsPercent());
-					qf.setQuestionText(q.getTitle(prefs.getString(PrefsActivity.PREF_LANGUAGE, Locale.getDefault().getLanguage())));
+					qf.setQuestionText(q.getTitle(prefLang));
 					qf.setUserResponse(q.getUserResponses());
-					String feedbackText = q.getFeedback(prefs.getString(PrefsActivity.PREF_LANGUAGE, Locale.getDefault().getLanguage()));
+					String feedbackText = q.getFeedback(prefLang);
 					qf.setFeedbackText(feedbackText);
 					quizFeedback.add(qf);
 				}
 			}
-			QuizFeedbackAdapter qfa = new QuizFeedbackAdapter(super.getActivity(), quizFeedback);
-			questionFeedbackLV.setAdapter(qfa);
+
+			QuizFeedbackAdapter adapterQuizFeedback = new QuizFeedbackAdapter(getActivity(), quizFeedback);
+			recyclerQuestionFeedbackLV.setAdapter(adapterQuizFeedback);
 		}
 		
 		// Show restart or continue button
 		Button restartBtn = getView().findViewById(R.id.quiz_results_button);
+		Button exitBtn = (Button) getView().findViewById(R.id.quiz_exit_button);
 
         int quizAvailability = checkQuizAvailability();
         boolean quizAvailable = quizAvailability == QUIZ_AVAILABLE;
@@ -534,6 +539,11 @@ public class QuizWidget extends WidgetFactory {
             availabilityMsg.setVisibility(View.VISIBLE);
         }
 
+		exitBtn.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				QuizWidget.this.getActivity().finish();
+			}
+		});
 		if (this.isBaseline) {
 			restartBtn.setText(super.getActivity().getString(R.string.widget_quiz_baseline_goto_course));
 			restartBtn.setOnClickListener(new View.OnClickListener() {
@@ -541,13 +551,9 @@ public class QuizWidget extends WidgetFactory {
 					QuizWidget.this.getActivity().finish();
 				}
 			});
+			exitBtn.setVisibility(View.GONE);
 		} else if (this.getActivityCompleted() || !quizAvailable){
-            restartBtn.setText(super.getActivity().getString(R.string.widget_quiz_continue));
-            restartBtn.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    QuizWidget.this.getActivity().finish();
-                }
-            });
+			restartBtn.setVisibility(View.GONE);
         } else{
 			restartBtn.setText(super.getActivity().getString(R.string.widget_quiz_results_restart));
 			restartBtn.setOnClickListener(new View.OnClickListener() {
@@ -563,8 +569,9 @@ public class QuizWidget extends WidgetFactory {
 		this.setStartTime(System.currentTimeMillis() / 1000);
 		
 		this.quiz = new Quiz();
-		this.quiz.load(quizContent,prefs.getString(PrefsActivity.PREF_LANGUAGE, Locale.getDefault().getLanguage()));
+		this.quiz.load(quizContent, prefLang);
 		this.isOnResultsPage = false;
+		this.quizAttemptSaved = false;
 		
 		// reload quiz layout
 		View C = getView().findViewById(R.id.widget_quiz_results);
@@ -594,7 +601,7 @@ public class QuizWidget extends WidgetFactory {
 	@Override
 	public void saveTracker() {
 		long timetaken = this.getSpentTime();
-		if(activity == null || !isOnResultsPage){
+		if(activity == null || !isOnResultsPage || quizAttemptSaved){
 			return;
 		}
 
@@ -602,6 +609,7 @@ public class QuizWidget extends WidgetFactory {
 		new GamificationServiceDelegate(getActivity())
 			.createActivityIntent(course, activity, getActivityCompleted(), isBaseline)
 			.registerQuizAttemptEvent(timetaken, quiz, this.getPercent());
+		quizAttemptSaved = true;
 	}
 
 	@Override
@@ -610,6 +618,7 @@ public class QuizWidget extends WidgetFactory {
 		config.put("quiz", this.quiz);
 		config.put(WidgetFactory.PROPERTY_ACTIVITY_STARTTIME, this.getStartTime());
 		config.put(WidgetFactory.PROPERTY_ON_RESULTS_PAGE, this.isOnResultsPage);
+		config.put(WidgetFactory.PROPERTY_ATTEMPT_SAVED, this.quizAttemptSaved);
 		return config;
 	}
 
@@ -624,6 +633,9 @@ public class QuizWidget extends WidgetFactory {
 		if (config.containsKey(WidgetFactory.PROPERTY_ON_RESULTS_PAGE)) {
 			this.isOnResultsPage = (Boolean) config.get(WidgetFactory.PROPERTY_ON_RESULTS_PAGE);
 		}
+		if (config.containsKey(WidgetFactory.PROPERTY_ATTEMPT_SAVED)) {
+			this.quizAttemptSaved = (Boolean) config.get(WidgetFactory.PROPERTY_ATTEMPT_SAVED);
+		}
 	}
 
 	@Override
@@ -631,7 +643,7 @@ public class QuizWidget extends WidgetFactory {
 		// Get the current question text
 		String toRead = "";
 		try {
-			toRead = quiz.getCurrentQuestion().getTitle(prefs.getString(PrefsActivity.PREF_LANGUAGE, Locale.getDefault().getLanguage()));
+			toRead = quiz.getCurrentQuestion().getTitle(prefLang);
 		} catch (InvalidQuizException e) {
 			Mint.logException(e);
 			Log.d(TAG, QUIZ_EXCEPTION_MESSAGE, e);
@@ -640,9 +652,8 @@ public class QuizWidget extends WidgetFactory {
 	}
 
 	private float getPercent() {
-		quiz.mark(prefs.getString(PrefsActivity.PREF_LANGUAGE, Locale.getDefault().getLanguage()));
-		float percent = quiz.getUserscore() * 100 / quiz.getMaxscore();
-		return percent;
+		quiz.mark(prefLang);
+		return quiz.getUserscore() * 100 / quiz.getMaxscore();
 	}
 
 	private void clearMediaPlayer(){
