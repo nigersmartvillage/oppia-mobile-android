@@ -17,3 +17,5 @@ gradlew.bat
 app/app-release.apk
 custom.properties
 projectFilesBackup/
+
+/app/google-services.json
