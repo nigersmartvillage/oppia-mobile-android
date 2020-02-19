@@ -17,4 +17,4 @@ app/app-release.apk
 custom.properties
 projectFilesBackup/
 
-/app/google-services.json
+app/google-services.json
