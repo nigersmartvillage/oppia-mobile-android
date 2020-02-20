@@ -18,3 +18,5 @@ custom.properties
 projectFilesBackup/
 
 app/google-services.json
+app/normal/*
+app/admin/*

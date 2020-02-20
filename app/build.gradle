@@ -69,7 +69,7 @@ android {
     }
 
     lintOptions {
-        checkReleaseBuilds true
+        checkReleaseBuilds false
         // Disable checks for String translations
         disable 'MissingTranslation', 'ExtraTranslation'
     }
