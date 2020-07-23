@@ -3,15 +3,17 @@ package org.digitalcampus.oppia.task;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.splunk.mint.Mint;
 
 import org.digitalcampus.oppia.activity.PrefsActivity;
-import org.digitalcampus.oppia.application.DbHelper;
+import org.digitalcampus.oppia.database.DbHelper;
 import org.digitalcampus.oppia.listener.ExportActivityListener;
+import org.digitalcampus.oppia.model.CustomField;
+import org.digitalcampus.oppia.model.CustomValue;
 import org.digitalcampus.oppia.model.QuizAttempt;
 import org.digitalcampus.oppia.model.TrackerLog;
 import org.digitalcampus.oppia.model.User;
@@ -49,9 +51,9 @@ public class ExportActivityTask extends AsyncTask<Payload, Integer, String> {
     @Override
     protected String doInBackground(Payload... payloads) {
 
-
         DbHelper db = DbHelper.getInstance(ctx);
         List<User> users = db.getAllUsers();
+        List<CustomField> customFields = db.getCustomFields();
 
         int trackersCount = 0;
         int offlineUsersCount = 0;
@@ -71,9 +73,23 @@ public class ExportActivityTask extends AsyncTask<Payload, Integer, String> {
             }
             userJSON += "\"firstname\":\"" + u.getFirstname() + "\", ";
             userJSON += "\"lastname\":\"" + u.getLastname() + "\", ";
-            userJSON += "\"organisation\":\"" + u.getOrganisation() + "\", ";
+            if (!TextUtils.isEmpty(u.getOrganisation())){
+                userJSON += "\"organisation\":\"" + u.getOrganisation() + "\", ";
+            }
             userJSON += "\"jobtitle\":\"" + u.getJobTitle() + "\", ";
             userJSON += "\"phoneno\":\"" + u.getPhoneNo() + "\", ";
+
+            for (CustomField field : customFields){
+                CustomValue value = u.getCustomField(field.getKey());
+                if (value != null){
+                    userJSON += "\"" + field.getKey() + "\":"
+                            + (field.isExportedAsString() ? "\"" : "")
+                            + value.getValue().toString()
+                            + (field.isExportedAsString() ? "\"" : "")
+                            + ", ";
+                }
+            }
+
             userJSON += "\"trackers\":" + TrackerLog.asJSONCollectionString(userTrackers) + ", ";
             userJSON += "\"quizresponses\":" + QuizAttempt.asJSONCollectionString(userQuizzes) + ", ";
             userJSON += "\"points\":[]";

@@ -15,8 +15,6 @@ gradlew
 gradlew.bat
 app/app-release.apk
 custom.properties
+sonarqube.properties
 projectFilesBackup/
-
-app/google-services.json
-app/normal/*
-app/admin/*
+/sonarcloud

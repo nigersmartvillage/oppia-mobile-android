@@ -1,7 +1,6 @@
 package org.digitalcampus.oppia.utils;
 
 import android.content.Context;
-import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.SparseBooleanArray;
@@ -31,7 +30,7 @@ public class MultiChoiceHelper {
      * A handy ViewHolder base class which works with the MultiChoiceHelper
      * and reproduces the default behavior of a ListView.
      */
-    public static abstract class ViewHolder extends RecyclerView.ViewHolder {
+    public abstract static class ViewHolder extends RecyclerView.ViewHolder {
 
         View.OnClickListener clickListener;
         MultiChoiceHelper multiChoiceHelper;
@@ -74,7 +73,7 @@ public class MultiChoiceHelper {
             final boolean isChecked = multiChoiceHelper.isItemChecked(position);
             if (itemView instanceof Checkable) {
                 ((Checkable) itemView).setChecked(isChecked);
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            } else {
                 itemView.setActivated(isChecked);
             }
         }
@@ -210,7 +209,7 @@ public class MultiChoiceHelper {
                 if (value) {
                     checkedIdStates.put(id, position);
                 } else {
-                    checkedIdStates.delete(id);
+                    checkedIdStates.remove(id);
                 }
             }
 
@@ -248,15 +247,7 @@ public class MultiChoiceHelper {
     }
 
     private static SparseBooleanArray clone(SparseBooleanArray original) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            return original.clone();
-        }
-        final int size = original.size();
-        SparseBooleanArray clone = new SparseBooleanArray(size);
-        for (int i = 0; i < size; ++i) {
-            clone.append(original.keyAt(i), original.valueAt(i));
-        }
-        return clone;
+        return original.clone();
     }
 
     public void onRestoreInstanceState(Parcelable state) {
@@ -328,9 +319,12 @@ public class MultiChoiceHelper {
         public void writeToParcel(Parcel out, int flags) {
             out.writeInt(checkedItemCount);
             out.writeSparseBooleanArray(checkStates);
-            final int n = checkedIdStates != null ? checkedIdStates.size() : -1;
-            out.writeInt(n);
-            for (int i = 0; i < n; i++) {
+            if (checkedIdStates == null){
+                out.writeInt(-1);
+                return;
+            }
+            out.writeInt(checkedIdStates.size());
+            for (int i = 0; i < checkedIdStates.size(); i++) {
                 out.writeLong(checkedIdStates.keyAt(i));
                 out.writeInt(checkedIdStates.valueAt(i));
             }
@@ -354,7 +348,7 @@ public class MultiChoiceHelper {
         };
     }
 
-    void confirmCheckedPositions() {
+    private void confirmCheckedPositions() {
         if (checkedItemCount == 0) {
             return;
         }
@@ -394,7 +388,7 @@ public class MultiChoiceHelper {
                     }
 
                     if (!found) {
-                        checkedIdStates.delete(id);
+                        checkedIdStates.remove(id);
                         checkedIndex--;
                         checkedItemCount--;
                         checkedCountChanged = true;

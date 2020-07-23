@@ -13,19 +13,21 @@ import android.widget.Toast;
 import org.digitalcampus.mobile.learning.R;
 import org.digitalcampus.oppia.adapter.ExportedTrackersFileAdapter;
 import org.digitalcampus.oppia.application.AdminSecurityManager;
-import org.digitalcampus.oppia.application.DbHelper;
+import org.digitalcampus.oppia.database.DbHelper;
 import org.digitalcampus.oppia.listener.ExportActivityListener;
 import org.digitalcampus.oppia.listener.TrackerServiceListener;
+import org.digitalcampus.oppia.model.ActivityLogRepository;
 import org.digitalcampus.oppia.task.ExportActivityTask;
 import org.digitalcampus.oppia.task.SubmitTrackerMultipleTask;
 import org.digitalcampus.oppia.utils.UIUtils;
 import org.digitalcampus.oppia.utils.resources.ExternalResourceOpener;
-import org.digitalcampus.oppia.utils.storage.Storage;
 
 import java.io.File;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.inject.Inject;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -44,6 +46,9 @@ public class ActivityLogActivity extends AppActivity implements TrackerServiceLi
     private TextView submittedTrackers;
     private TextView unexportedTrackers;
 
+    @Inject
+    ActivityLogRepository logsRepository;
+
     private RecyclerView exportedFilesRecyclerView;
     private RecyclerView.Adapter filesAdapter;
     private ArrayList<File> files = new ArrayList<>();
@@ -61,7 +66,7 @@ public class ActivityLogActivity extends AppActivity implements TrackerServiceLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_activitylog);
         // Prevent activity from going to sleep
-
+        getAppComponent().inject(this);
         exportedFilesRecyclerView = findViewById(R.id.exported_files_list);
         archivedFilesRecyclerView = findViewById(R.id.archived_files_list);
         exportBtn = findViewById(R.id.export_btn);
@@ -158,33 +163,19 @@ public class ActivityLogActivity extends AppActivity implements TrackerServiceLi
         submittedTrackers.setText(NumberFormat.getNumberInstance().format(db.getSentTrackersCount()));
 
         Log.d(TAG, "files " + files.size());
-        submitBtn.setEnabled((unsent > 0) || files.size() > 0);
+        submitBtn.setEnabled((unsent > 0) || !files.isEmpty());
         exportBtn.setEnabled((unexported > 0));
 
     }
 
     private void refreshFileList() {
-        File activityFolder = new File(Storage.getActivityPath(this));
-        if (activityFolder.exists()) {
-            files.clear();
-            String[] children = activityFolder.list();
-            for (String dirFiles : children) {
-                File exportedActivity = new File(activityFolder, dirFiles);
-                files.add(exportedActivity);
-            }
-            filesAdapter.notifyDataSetChanged();
-        }
+        files.clear();
+        files.addAll(logsRepository.getExportedActivityLogs(this));
+        filesAdapter.notifyDataSetChanged();
 
-        File archivedFolder = new File(Storage.getActivityArchivePath(this));
-        if (archivedFolder.exists()) {
-            archivedFiles.clear();
-            String[] children = archivedFolder.list();
-            for (String dirFiles : children) {
-                File exportedActivity = new File(archivedFolder, dirFiles);
-                archivedFiles.add(exportedActivity);
-            }
-            archivedFilesAdapter.notifyDataSetChanged();
-        }
+        archivedFiles.clear();
+        archivedFiles.addAll(logsRepository.getArchivedActivityLogs(this));
+        archivedFilesAdapter.notifyDataSetChanged();
     }
 
 
@@ -201,7 +192,7 @@ public class ActivityLogActivity extends AppActivity implements TrackerServiceLi
             msg = getString(success ?  R.string.submit_trackers_success : R.string.error_connection);
         }
 
-        if (failures.size() > 0){
+        if (!failures.isEmpty()){
             msg += "\nErrors: \n";
             msg += TextUtils.join("\n", failures);
         }

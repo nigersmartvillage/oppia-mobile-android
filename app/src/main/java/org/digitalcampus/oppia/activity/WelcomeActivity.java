@@ -55,6 +55,7 @@ public class WelcomeActivity extends AppActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_welcome);
 		viewPager = findViewById(R.id.activity_welcome_pager);
+		getAppComponent().inject(this);
 	}
 	
 	@Override
@@ -92,9 +93,6 @@ public class WelcomeActivity extends AppActivity {
 
         ActivityPagerAdapter apAdapter = new ActivityPagerAdapter(this, getSupportFragmentManager(), fragments, tabTitles);
 		viewPager.setAdapter(apAdapter);
-        //tabs.setupWithViewPager(viewPager);
-        //tabs.setTabMode(TabLayout.MODE_FIXED);
-        //tabs.setTabGravity(TabLayout.GRAVITY_FILL);
 
 		viewPager.setCurrentItem(currentTab);
         viewPager.setOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabs));

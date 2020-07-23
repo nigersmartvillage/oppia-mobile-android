@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE resources [
     <!ENTITY appName "Villages Intelligents Niger">
-    <!ENTITY companyName "Digital Campus"> ]>
+    <!ENTITY companyName "Smart Villages Project"> ]>
 <resources>
     <string name="app_name">&appName;Villages Intelligents Niger</string>
     <string name="app_logo_alt">&companyName; Logo</string>
@@ -13,8 +13,6 @@
     <string name="menu_language">Choisir la langue</string>
     <string name="menu_settings">Paramètres</string>
     <string name="menu_about">À propos</string>
-    <string name="menu_font_increase">Agrandir la taille du texte</string>
-    <string name="menu_font_decrease">Réduire la taille du texte</string>
     <string name="menu_help">Aide</string>
     <string name="menu_logout">Déconnection</string>
     <string name="menu_read_aloud">Lire à voix haute</string>
@@ -53,8 +51,6 @@
     <string name="title_activity_course_index">Catalogue des cours</string>
     <string name="title_activity_course">Activité</string>
     <string name="title_course_meta">À propos</string>
-    <string name="title_stats_submitted">Pas d\'activités envoyées au serveur</string>
-    <string name="title_stats_unsubmitted">Pas d\'activités en attente</string>
     <string name="title_prefs">Paramètres</string>
     <string name="title_scorecard">Carnet</string>
     <string name="title_tag_select_activity">Choisir une catégorie</string>
@@ -97,15 +93,11 @@
     <string name="prefBackgroudDataConnect_summary">Envoyer le journal d\'activités même lorsque l\'application est en mode de veille</string>
     <string name="prefLanguage">Langue préférée</string>
     <string name="prefHighlightCompleted">Mettre en surbrillance les activités terminées</string>
-    <string name="prefNoScheduleReminders">Number of suggested activities</string>
-    <string name="prefNoScheduleReminders_summary">Nombre d\'activités proposées à afficher</string>
     <string name="prefServer">Serveur</string>
     <string name="prefServerTimeoutConnection">Délai de connexion</string>
     <string name="prefServerTimeoutResponse">Délai de réponse</string>
     <string name="prefShowCourseDescription">Afficher la description des cours</string>
     <string name="prefShowProgressBar">Afficher la barre de progression</string>
-    <string name="prefShowScheduleReminders">Afficher les activités suggérées</string>
-    <string name="prefShowScheduleReminders_summary">Afficher les activités qui doivent être complétées par la suite</string>
     <string name="prefShowSectionNumbers">Afficher les numéros des sections</string>
     <string name="prefTextSize">Taille du texte</string>
     <string name="prefUser">Nom d\'utilisateur</string>
@@ -174,7 +166,6 @@
 
     <string name="publisher">Éditeur :</string>
     <string name="update">Mise à jour</string>
-    <string name="update_schedule">Calendrier de mise à jour</string>
     <string name="installed">Installé</string>
     <string name="install">Installation en cours</string>
 
@@ -182,9 +173,7 @@
     <string name="downloading">Téléchargement en cours &#8230;</string>
     <string name="download_complete">Téléchargement terminé</string>
 
-    <string name="update_starting">Obtenir des mises à jour régulières</string>
     <string name="updating">Mise à jour en cours &#8230;</string>
-    <string name="update_complete">Mise à jour terminée</string>
 
     <string name="installing_course">Installation de :  %1$s</string>
     <string name="install_complete">Installation terminée</string>
@@ -275,8 +264,6 @@
     <string name="download_via_pc_title">Téléchargement des fichiers média</string>
     <string name="download_via_pc_intro">Téléchargez tous les fichiers ci-dessous sur votre ordinateur (utiliser le bouton droit de la souris et choisissez enregistrer-sous)</string>
     <string name="download_via_pc_final">Une fois que vous aurez téléchargé les fichiers, copiez-les sur le repertoire \'%1$s\' de la carte SD de votre appareil.</string>
-
-    <string name="schedule_reminders">Prochaines activité proposées :</string>
 
     <string name="course_draft">(Brouillon)</string>
 

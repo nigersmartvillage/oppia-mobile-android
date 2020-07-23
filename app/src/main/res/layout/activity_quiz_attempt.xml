@@ -26,8 +26,6 @@
             android:id="@+id/action_bar_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-
-            android:layout_centerVertical="true"
             android:layout_gravity="center"
             android:background="@color/subtitle_bar"
             android:gravity="center_vertical"
@@ -140,7 +138,7 @@
                 android:overScrollMode="never"
                 android:padding="@dimen/padding_medium"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/widget_quiz_feedback_row" />
+                tools:listitem="@layout/row_widget_quiz_feedback" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

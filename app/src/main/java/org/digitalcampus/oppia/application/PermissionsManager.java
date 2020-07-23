@@ -23,7 +23,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,15 +38,22 @@ import java.util.List;
 
 public class PermissionsManager {
 
-    public final static String TAG = PermissionsManager.class.getSimpleName();
+    public static final String TAG = PermissionsManager.class.getSimpleName();
     private static final int PERMISSIONS_REQUEST = 1246;
-    private static final List<String> PERMISSIONS_REQUIRED = Arrays.asList(
-        //Remember to update this when the Manifest permisssions change!
+    public static final List<String> STARTUP_PERMISSIONS_REQUIRED = Arrays.asList(
+        //Remember to update this when the Manifest permissions change!
         Manifest.permission.READ_PHONE_STATE,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE,
-        Manifest.permission.ACCESS_COARSE_LOCATION,
-        Manifest.permission.ACCESS_FINE_LOCATION
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
     );
+    public static final List<String> BLUETOOTH_PERMISSIONS_REQUIRED = Arrays.asList(
+            //Remember to update this when the Manifest permissions change!
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION
+    );
+
+    private PermissionsManager() {
+        throw new IllegalStateException("Utility class");
+    }
 
     private static boolean isFirstTimeAsked(SharedPreferences prefs, String permission){
         return !prefs.getBoolean(permission + "_asked", false);
@@ -56,13 +63,13 @@ public class PermissionsManager {
          prefs.edit().putBoolean(permission + "_asked", true).apply();
     }
 
-    public static boolean CheckPermissionsAndInform(final Activity act){
+    public static boolean checkPermissionsAndInform(final Activity act, final List<String> permissions){
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             //If sdk version prior to 23 (Android M), the permissions are granted by manifest
             return true;
         }
 
-        final List<String> permissionsToAsk = filterNotGrantedPermissions(act, PERMISSIONS_REQUIRED);
+        final List<String> permissionsToAsk = filterNotGrantedPermissions(act, permissions);
 
         ViewGroup container = act.findViewById(R.id.permissions_explanation);
         if (!permissionsToAsk.isEmpty()) {
@@ -70,6 +77,7 @@ public class PermissionsManager {
             LayoutInflater layoutInflater = (LayoutInflater) act.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             container.removeAllViews();
             View explanation = layoutInflater.inflate(R.layout.view_permissions_explanation, container);
+            showPermissionDescriptions(act, explanation, permissionsToAsk);
             container.setVisibility(View.VISIBLE);
 
             Button reqPermsBtn = explanation.findViewById(R.id.btn_permissions);
@@ -101,6 +109,19 @@ public class PermissionsManager {
 
     }
 
+
+    private static void showPermissionDescriptions(Context ctx, View container, final List<String> permissions){
+        for (String permission : permissions){
+            String descriptionID = "permission_" + permission.substring(permission.lastIndexOf(".")+1);
+            Log.d(TAG, descriptionID);
+            int viewID = ctx.getResources().getIdentifier(descriptionID, "id", ctx.getPackageName());
+            View description = container.findViewById(viewID);
+            if (description != null){
+                description.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
     public static void requestPermissions(final Activity act, List<String> permissions){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             act.requestPermissions( permissions.toArray(new String[0]), PERMISSIONS_REQUEST );
@@ -114,19 +135,14 @@ public class PermissionsManager {
             return true;
         }
 
-        boolean canAsk = true;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(act.getApplicationContext());
         for (String permission : permissions) {
-            if (act.shouldShowRequestPermissionRationale(permission)) {
-            }
-            else{
-                if (!isFirstTimeAsked(prefs, permission)){
-                    //The permission has been asked before, and the user answered "dont ask again"
-                    canAsk = false;
-                }
+            if (!act.shouldShowRequestPermissionRationale(permission) && !isFirstTimeAsked(prefs, permission)) {
+                //The permission has been asked before, and the user answered "dont ask again"
+                return false;
             }
         }
-        return canAsk;
+        return true;
     }
 
     public static List<String> filterNotGrantedPermissions(final Activity act, List<String> permissions){

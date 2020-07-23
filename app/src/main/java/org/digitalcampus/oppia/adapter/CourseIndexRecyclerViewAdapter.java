@@ -2,7 +2,7 @@ package org.digitalcampus.oppia.adapter;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,10 +16,11 @@ import com.squareup.picasso.Picasso;
 
 import org.digitalcampus.mobile.learning.R;
 import org.digitalcampus.oppia.activity.PrefsActivity;
-import org.digitalcampus.oppia.application.MobileLearning;
+import org.digitalcampus.oppia.application.App;
 import org.digitalcampus.oppia.model.Activity;
 import org.digitalcampus.oppia.model.Course;
 import org.digitalcampus.oppia.model.Section;
+import org.digitalcampus.oppia.utils.CircleTransform;
 import org.digitalcampus.oppia.utils.ui.ExpandableRecyclerView;
 
 import java.io.File;
@@ -47,12 +48,12 @@ public class CourseIndexRecyclerViewAdapter extends ExpandableRecyclerView.Adapt
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
         prefLang = prefs.getString(PrefsActivity.PREF_LANGUAGE, Locale.getDefault().getLanguage());
         showSectionNumbers = prefs.getBoolean(PrefsActivity.PREF_SHOW_SECTION_NOS, false);
-        highlightCompleted = prefs.getBoolean(PrefsActivity.PREF_HIGHLIGHT_COMPLETED, MobileLearning.DEFAULT_DISPLAY_COMPLETED);
+        highlightCompleted = prefs.getBoolean(PrefsActivity.PREF_HIGHLIGHT_COMPLETED, App.DEFAULT_DISPLAY_COMPLETED);
         boolean startCollapsed = prefs.getBoolean(PrefsActivity.PREF_START_COURSEINDEX_COLLAPSED, false);
 
         this.startExpanded = !startCollapsed;
         courseLocation = course.getLocation();
-        highlightColor = ContextCompat.getColor(ctx, R.color.theme_secondary);
+        highlightColor = ContextCompat.getColor(ctx, R.color.course_index_highlight);
         normalColor = ContextCompat.getColor(ctx, R.color.text_dark);
 
         courseTitle = course.getTitle(prefLang);
@@ -101,20 +102,24 @@ public class CourseIndexRecyclerViewAdapter extends ExpandableRecyclerView.Adapt
 
     @Override
     protected SectionViewHolder onCreateGroupViewHolder(ViewGroup parent) {
-        View rootView = LayoutInflater.from(parent.getContext()).inflate(R.layout.section_header, parent, false);
+        View rootView = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_course_index_section_header, parent, false);
         return new SectionViewHolder(rootView);
     }
 
     @Override
     protected ChildViewHolder onCreateChildViewHolder(ViewGroup parent, int viewType) {
-        View rootView = LayoutInflater.from(parent.getContext()).inflate(R.layout.section_item, parent, false);
+        View rootView = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_course_index_section_item, parent, false);
         return new ChildViewHolder(rootView);
     }
 
     @Override
     public void onBindHeaderViewHolder(HeaderViewHolder holder) {
         holder.title.setText(courseTitle);
-        Picasso.get().load(new File(courseIcon)).error(R.drawable.default_course).into(holder.courseImage);
+        Picasso.get().load(new File(courseIcon))
+                .placeholder(R.drawable.course_icon_placeholder)
+                .error(R.drawable.course_icon_placeholder)
+                .transform(new CircleTransform())
+                .into(holder.courseImage);
     }
 
     @Override
