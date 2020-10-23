@@ -34,7 +34,8 @@ public class ValidableSpinnerLayout extends LinearLayout implements ValidableFie
     private boolean selected = false;
     private ArrayAdapter<CustomField.CollectionItem> adapter;
 
-    private onChangeListener valueChangelistener;
+    private CustomValidator validator;
+    private List<onChangeListener> valueChangelisteners = new ArrayList<>();
 
     public ValidableSpinnerLayout(Context context){
         super(context);
@@ -67,6 +68,8 @@ public class ValidableSpinnerLayout extends LinearLayout implements ValidableFie
         }
         else{
             labelText.setTextSize(getResources().getDimension(R.dimen.hint_text_size));
+            errorText.setTextSize(getResources().getDimension(R.dimen.hint_text_size));
+            labelText.setTextColor(ContextCompat.getColor(getContext(), R.color.theme_secondary));
             errorText.setTextColor(ContextCompat.getColor(getContext(), R.color.text_error));
         }
 
@@ -89,12 +92,14 @@ public class ValidableSpinnerLayout extends LinearLayout implements ValidableFie
     }
 
     public void setSelection(String key){
-        if (key == null){
+        if (key == null || items == null){
             return;
         }
         for (int i=0; i<items.size(); i++){
             if (TextUtils.equals(items.get(i).getKey(), key)){
-                input.setSelection(i + (selected ? 0 : 1));
+                int position = i + (selected ? 0 : 1);
+                input.setSelection(position);
+                onItemSelected(null, null, position, 0);
                 return;
             }
         }
@@ -110,7 +115,7 @@ public class ValidableSpinnerLayout extends LinearLayout implements ValidableFie
         if (tv == null){
             return;
         }
-        tv.setTextColor(getContext().getResources().getColor( !selected && position == 0 ? R.color.grey_dark : R.color.text_dark));
+        tv.setTextColor(ContextCompat.getColor(getContext(), !selected && position == 0 ? R.color.grey_dark : R.color.text_dark));
         tv.invalidate();
     }
 
@@ -148,12 +153,17 @@ public class ValidableSpinnerLayout extends LinearLayout implements ValidableFie
     @Override
     public boolean validate() {
         boolean valid = !required || selected;
+        if (valid && validator != null){
+            valid = validator.validate(this);
+        }
+
         errorText.setVisibility(valid ? GONE : VISIBLE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             labelText.setTextAppearance( valid ?
                     R.style.Oppia_CustomField_TextInputLayoutLabel :
                     R.style.Oppia_CustomField_TextInputLayoutError);
         }
+
         return valid;
     }
 
@@ -171,36 +181,60 @@ public class ValidableSpinnerLayout extends LinearLayout implements ValidableFie
 
     @Override
     public String getCleanedValue() {
+        if (items == null || items.isEmpty()){
+            return null;
+        }
         int pos = input.getSelectedItemPosition();
         return items.get(pos).getKey();
     }
 
     @Override
-    public void setChangeListener(onChangeListener listener) {
-        this.valueChangelistener = listener;
+    public void addChangeListener(onChangeListener listener) {
+        this.valueChangelisteners.add(listener);
+    }
+
+    private void notifyListeners(){
+        for (onChangeListener listener : valueChangelisteners){
+            listener.onValueChanged(getCleanedValue());
+        }
+    }
+
+    @Override
+    public void invalidateValue() { notifyListeners(); }
+
+    @Override
+    public View getView() {
+        return this;
+    }
+
+    @Override
+    public void setCustomValidator(CustomValidator v) {
+        validator = v;
     }
 
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
-        setDisabledTextColor(view, position);
+        if (view != null){
+            setDisabledTextColor(view, position);
+        }
         if (!selected){
             selected = position !=0;
             if (selected){
                 uiItems.remove(0);
                 adapter.notifyDataSetChanged();
-                //As we removed the first item, we need to reselect the element in the dropdown
+                // As we removed the first item, we need to reselect the element in the dropdown
                 input.setSelection(position-1);
             }
         }
 
-        if(selected && valueChangelistener != null){
-            valueChangelistener.onValueChanged(getCleanedValue());
+        if(selected){
+            notifyListeners();
         }
 
     }
 
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {
-
+        notifyListeners();
     }
 }

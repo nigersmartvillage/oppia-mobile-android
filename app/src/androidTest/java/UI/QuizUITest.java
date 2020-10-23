@@ -43,8 +43,6 @@ import androidx.test.rule.ActivityTestRule;
 public class QuizUITest {
 
     private static final String SIMPLE_QUIZ_JSON = "quizzes/simple_quiz.json";
-    private static final String FIRST_QUESTION_TITLE = "First question";
-
     private Activity act;
     private Bundle args;
 
@@ -66,30 +64,37 @@ public class QuizUITest {
     }
 
     @Test
-    public void dontContinueIfQuestionUnaswered() {
+    public void showContinueIfQuizPassed() {
         launchInContainer(QuizWidget.class, args, R.style.Oppia_ToolbarTheme, null);
-
-        onView(withId(R.id.question_text))
-                .check(matches(withText(startsWith(FIRST_QUESTION_TITLE))));
-        onView(withId(R.id.mquiz_next_btn)).perform(click());
-
-        //If we didn't select any option, it should have stayed in the same question
-        onView(withId(R.id.question_text))
-                .check(matches(withText(startsWith(FIRST_QUESTION_TITLE))));
-
-    }
-
-    @Test
-    public void continueIfQuestionAnswered() {
-        launchInContainer(QuizWidget.class, args, R.style.Oppia_ToolbarTheme, null);
-        onView(withId(R.id.question_text))
-                .check(matches(withText(startsWith(FIRST_QUESTION_TITLE))));
 
         onView(withText("correctanswer")).perform(click());
         onView(withId(R.id.mquiz_next_btn)).perform(click());
+        onView(withText("correctanswer")).perform(click());
+        onView(withId(R.id.mquiz_next_btn)).perform(click());
 
-        onView(withId(R.id.question_text))
-                .check(matches(not(withText(startsWith(FIRST_QUESTION_TITLE)))));
-
+        //If the quiz is passed, we only have to show the "Continue" button
+        onView(withId(R.id.quiz_exit_button))
+                .check(matches(withText(R.string.widget_quiz_continue)));
+        onView(withId(R.id.quiz_results_button))
+                .check(matches(not(isDisplayed())));
     }
+
+    @Test
+    public void showRetakeIfQuizNotPassed() {
+        launchInContainer(QuizWidget.class, args, R.style.Oppia_ToolbarTheme, null);
+
+        onView(withText("correctanswer")).perform(click());
+        onView(withId(R.id.mquiz_next_btn)).perform(click());
+        onView(withText("wronganswer")).perform(click());
+        onView(withId(R.id.mquiz_next_btn)).perform(click());
+
+        //If the quiz is passed, we only have to show the "Continue" button
+        onView(withId(R.id.quiz_exit_button))
+                .check(matches(withText(R.string.widget_quiz_continue)));
+        onView(withId(R.id.quiz_results_button))
+                .check(matches(isDisplayed()));
+        onView(withId(R.id.quiz_results_button))
+                .check(matches(withText(R.string.quiz_attempts_retake_quiz)));
+    }
+
 }

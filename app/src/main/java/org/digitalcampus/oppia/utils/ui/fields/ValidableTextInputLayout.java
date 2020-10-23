@@ -2,7 +2,6 @@ package org.digitalcampus.oppia.utils.ui.fields;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.text.Html;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -13,12 +12,15 @@ import com.google.android.material.textfield.TextInputLayout;
 
 import org.digitalcampus.mobile.learning.R;
 
+import androidx.core.text.HtmlCompat;
+
 public class ValidableTextInputLayout extends TextInputLayout implements ValidableField, View.OnFocusChangeListener {
 
     private static final String REQUIRED_SPANNED_HINT = "<string>%s <span style=\"color:red;\">*</span></string>";
 
     private boolean required = false;
     private boolean cantContainSpaces = false;
+    private CustomValidator validator;
 
     public ValidableTextInputLayout(Context context) {
         super(context);
@@ -55,15 +57,17 @@ public class ValidableTextInputLayout extends TextInputLayout implements Validab
     public void initialize(){
         if (required && this.getEditText() != null){
             String html = String.format(REQUIRED_SPANNED_HINT, this.getHint());
-            Spanned requiredHint = Html.fromHtml(html);
+            Spanned requiredHint = HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_LEGACY);
             this.setHint(requiredHint);
         }
 
         if (!TextUtils.isEmpty(getHelperText())){
             // We add some additional bottom margin
             LayoutParams params = (LayoutParams) getLayoutParams();
-            params.bottomMargin = getContext().getResources().getDimensionPixelOffset(R.dimen.margin_medium);
-            setLayoutParams(params);
+            if (params != null){
+                params.bottomMargin = getContext().getResources().getDimensionPixelOffset(R.dimen.margin_medium);
+                setLayoutParams(params);
+            }
         }
         initializeLabelColorHintSelector();
 
@@ -86,6 +90,10 @@ public class ValidableTextInputLayout extends TextInputLayout implements Validab
             this.setError(getContext().getString(R.string.field_spaces_error));
             valid = false;
         }
+        if (valid && validator != null){
+            valid = validator.validate(this);
+        }
+
         if (valid){
             this.setError(null);
             this.setErrorEnabled(false);
@@ -103,20 +111,34 @@ public class ValidableTextInputLayout extends TextInputLayout implements Validab
 
     private void initializeLabelColorHintSelector() {
 
-        addOnEditTextAttachedListener(new OnEditTextAttachedListener() {
-            @Override
-            public void onEditTextAttached(TextInputLayout textInputLayout) {
-                getEditText().setFocusable(true);
-                getEditText().setFocusableInTouchMode(true);
-                getEditText().setOnFocusChangeListener(ValidableTextInputLayout.this);
-                setEditTextSelected();
-            }
+        addOnEditTextAttachedListener(textInputLayout -> {
+            getEditText().setFocusable(true);
+            getEditText().setFocusableInTouchMode(true);
+            getEditText().setOnFocusChangeListener(ValidableTextInputLayout.this);
+            setEditTextSelected();
         });
     }
 
 
     @Override
-    public void setChangeListener(onChangeListener listener) { }
+    public void addChangeListener(onChangeListener listener) {
+        // do nothing
+    }
+
+    @Override
+    public void invalidateValue() {
+        // do nothing
+    }
+
+    @Override
+    public View getView() {
+        return this;
+    }
+
+    @Override
+    public void setCustomValidator(CustomValidator v) {
+        validator = v;
+    }
 
     // Small hack to be able to show different label colors when the field is empty or filled
     // using the color selector based in the "selected" state.

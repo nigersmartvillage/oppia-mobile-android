@@ -8,7 +8,7 @@
     "courseversion":"20190521122247",
     "maxattempts":0,
     "digest":"b56d41a0bd7c93acdea034c50118414718295cr0s2a1p80a0m0",
-    "maxscore":11,
+    "maxscore":2,
     "availability":0,
     "showfeedback":2
   },
@@ -25,7 +25,7 @@
               "id":244
             },
             "order":1,
-            "score":"0.0000",
+            "score":"1.0000",
             "id":103055
           },
           {
@@ -36,7 +36,7 @@
               "id":954
             },
             "order":2,
-            "score":"1.0000",
+            "score":"0.0000",
             "id":103056
           }
         ],
@@ -58,21 +58,21 @@
         "responses":[
           {
             "title":{
-              "en":"10-20"
+              "en":"correctanswer"
             },
             "props":{
               "id":167,
               "feedback":{
-                "en":"Incorrect"
+                "en":"Correct"
               }
             },
             "order":1,
-            "score":"0.0000",
+            "score":"1.0000",
             "id":103059
           },
           {
             "title":{
-              "en":"5-10"
+              "en":"wronganswer"
             },
             "props":{
               "id":838,
