@@ -8,6 +8,7 @@
 /.idea/
 /build
 /app/build
+/app/normal/release/*
 /gradle/wrapper/gradle-wrapper.jar
 *.iml
 .gradle
